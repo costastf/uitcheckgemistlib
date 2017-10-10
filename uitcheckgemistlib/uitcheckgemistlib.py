@@ -65,6 +65,7 @@ class Server(object):
         self._card = OvChipCard(card_number, valid_until)
         self._birth_date = birth_date
         self._missed_checks = None
+        self._latest_missed_checks = None
         self._headers = {'Content-Type': 'application/x-www-form-urlencoded'}
         self._session = Session()
         self._authenticate()
@@ -119,16 +120,13 @@ class Server(object):
     def missed_checks(self):
         return self._missed_checks
 
-    def _parse_missed_checks(self, response):
-        self._response = response
-        transactions = []
-        return transactions
+    @staticmethod
+    def _parse_missed_checks(response):
+        _ = response
+        return True
 
     def get_latest_missed_checks(self):
-        _ = self.missed_checks  # noqa
-        missed_checks = self._missed_checks[:]
-        self._missed_checks = []
-        return missed_checks
+        pass
 
 
 class OvChipCard(object):
