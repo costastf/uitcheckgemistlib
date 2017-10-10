@@ -65,6 +65,7 @@ class Server(object):
         self._card = OvChipCard(card_number, valid_until)
         self._birth_date = birth_date
         self._missed_checks = None
+        self._headers = {'Content-Type': 'application/x-www-form-urlencoded'}
         self._session = Session()
         self._authenticate()
 
@@ -87,22 +88,25 @@ class Server(object):
                     self._card.quadrants.forth,
                 'tls_card_information[expirationDate]': self._card.valid_until,
                 'tls_card_information[optIn]': 1}
-        response = self._submit_data(self._base_url, data)
+        response = self._session.post(self._base_url,
+                                      data=data,
+                                      headers=self._headers)
         return response
 
     def _submit_personal_information(self, response):
         token = self._get_token(response, 'tls_person_information[_token]')
         data = {'tls_person_information[_token]': token,
                 'tls_person_information[holderBirthDate]': self._birth_date}
-        response = self._submit_data(response.url, data)
+        response = self._session.post(response.url,
+                                      data=data,
+                                      headers=self._headers)
         redirect = response.history[0].headers.get('Location')
         self._data_url = self._trim_slash(self._base_url) + redirect
         return response
 
     @staticmethod
     def _trim_slash(data):
-        if data.endswith('/'):
-            data = data[:-1]
+        data = data[:-1] if data.endswith('/') else data
         return data
 
     @staticmethod
@@ -110,11 +114,6 @@ class Server(object):
         soup = bfs(response.text, 'html.parser')
         token = soup.find('input', {'name': name}).attrs.get('value')
         return token
-
-    def _submit_data(self, url, data):
-        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-        response = self._session.post(url, data=data, headers=headers)
-        return response
 
     @property
     def missed_checks(self):
